@@ -1,9 +1,9 @@
-# Juniper PyEZ Example: Retrieve Route Table
+# Juniper PyEZ Example: Write Version Information to files
 
 This example will show how to use PyEZ to 
 
 1. build a NETCONF connection to a remote device
-2. execute the RPC command of `get-route-information`
+2. execute the RPC command of `get-software-information`
 3. print the output to the screen
 
 ## 🚀 `Executing the script`
