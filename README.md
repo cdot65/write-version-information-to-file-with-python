@@ -1,10 +1,13 @@
-# Juniper PyEZ Example: Write Version Information to files
+# Juniper PyEZ Example: Retrieve Version from multiple devices
 
 This example will show how to use PyEZ to 
 
-1. build a NETCONF connection to a remote device
-2. execute the RPC command of `get-software-information`
-3. print the output to the screen
+1. create a list of devices
+2. build a NETCONF connection to the first device in the list
+3. execute the RPC command of `get-software-information`
+4. append the output to an empty list called `list_of_device_output`
+5. repeat the process for remaining devices in list
+6. print the object `list_of_device_output` to the screen
 
 ## 🚀 `Executing the script`
 
@@ -75,14 +78,30 @@ from jnpr.junos import Device
 from pprint import pprint
 import json
 
+devices = [
+        "dallas-fw0",
+        "austin-fw0",
+        "houston-fw0"
+    ]
 
-with Device(host='dallas-fw0', user='automation', password='juniper123') as network_device:
-    try:
-        route_table = network_device.rpc.get_route_information({'format': 'json'})
-    except:
-        pass
 
-pprint(route_table)
+def write_to_file(device, payload):
+    # Open function to open the file "hostname.py" 
+    # (same directory) in append mode 
+    filename = f"./output/{device}.py"
+    file1 = open(filename,"a")
+    file1.write(str(payload) + "\n")
+    file1.close()
+    pass
+
+
+for device in devices:
+    with Device(host=device, user='automation', password='juniper123') as dev:
+        try:
+            show_version = dev.rpc.get_software_information({'format':'json'})
+            write_to_file(device, show_version)
+        except:
+            pass
 ```
 
 - We need to import the PyEZ package into our script
@@ -101,33 +120,83 @@ from pprint import pprint
 import json
 ```
 
-- Our goal now is to build the SSH connection to the remote device
+- our first task is to build a list of devices for us to interface with
+- This list is using DNS records to resolve hostnames
+- you may use IP addresses if you're not cool enough to run DNS in your home
+
+```python
+inventory = [
+        "dallas-fw0",
+        "houston-fw0",
+        "austin-fw0"
+    ]
+```
+
+- this one may look like a headscratcher, but hear me out
+- creating an empty list here allows us to have something to store the output from our devices into
+
+```python
+list_of_device_output = []
+```
+
+- now let's begin our loop over the inventory list
+
+```python
+for each_hostname in inventory:
+    ...
+    ...
+```
+
+
+
+- Our goal now is to build the SSH connection to the first device in our list.
+- We reference the object name from our `for loop` above, in this case `each_hostname`
 - We create a new Python object called `network_device`, based on the parameters passed into the `Device` class
 
 ```python
-with Device(host='dallas-fw0', user='automation', password='juniper123') as network_device:
+    with Device(host=each_hostname, user='automation', password='juniper123') as network_device:
+        ...
+        ...
 ```
 
 - by using the `try/exempt` feature in Python, we can enable our script to handle exception errors easily.
 - here we tell Python to "try to do this code, but if you get an exemption, go about your day"
 - the code we're running in `try/exempt` is making a remote proceedure call (RPC) for the routing table
-- we pass an argument into the request, asking for the return payload be structured in JSON
-- the resulting output from the RPC is stored in a new object called `route_table`
 
 ```python
     try:
-        route_table = network_device.rpc.get_route_information({'format': 'json'})
+        ...
+        ...
     except:
         pass
 ```
 
-- finally, we are simply printing out the object `route_table` to the screen.
-- using the `pprint` function we imported at the top of the screen, we get basic formatting of our object.
+- we pass an argument into the request, asking for the return payload be structured in JSON
+- the resulting output from the RPC is stored in a new object called `show_version`
+- we create a new Python dictionary that has a key/value pair of the device's hostname alongside the payload
+- we can later use this new `payload` structure to understand which device the output came from
 
 ```python
-pprint(route_table)
+            show_version = network_device.rpc.get_software_information({'format':'json'})
+            write_to_file(device, show_version)
 ```
 
+- we then run the output through our function named `write_to_file`, let's look into that function
+- we declare a new object called `filename` and set the value the path of `output/` and the hostname of the device.
+- this `filename` object will be the path of where the output is written
+- using the `open()` method with `a` allows us to append to an existing file
+- using the `write()` method, we dump the output of our script into the file and close it
+
+```python
+def write_to_file(device, payload):
+    # Open function to open the file "hostname.py" 
+    # (same directory) in append mode 
+    filename = f"./output/{device}.py"
+    file1 = open(filename,"a")
+    file1.write(str(payload) + "\n")
+    file1.close()
+    pass
+```
 
 ## 📸 `Screenshot`
 
